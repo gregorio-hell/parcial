@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using parcial.Data;
 using parcial.Services;
 
@@ -39,6 +38,37 @@ builder.Services.AddScoped<ISesionService, SesionService>();
 builder.Services.AddScoped<ICursosCache, CursosCache>();
 
 var app = builder.Build();
+
+// Inicializar base de datos automáticamente
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        // Aplicar migraciones automáticamente
+        logger.LogInformation("Aplicando migraciones de base de datos...");
+        await context.Database.MigrateAsync();
+        
+        // Ejecutar seed data
+        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        
+        logger.LogInformation("Ejecutando seed data...");
+        await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
+        
+        logger.LogInformation("Base de datos inicializada correctamente.");
+    }
+    catch (Exception ex)
+    {
+        var logger2 = services.GetRequiredService<ILogger<Program>>();
+        logger2.LogError(ex, "Error al inicializar la base de datos: {Error}", ex.Message);
+        // En producción, continuar sin fallar
+    }
+}
 
 // Pipeline simple
 if (app.Environment.IsDevelopment())
