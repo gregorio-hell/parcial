@@ -1,0 +1,161 @@
+@model parcial.ViewModels.CatalogoCursosViewModel
+@{
+    ViewData["Title"] = "Catálogo de Cursos";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-book"></i> Catálogo de Cursos
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel de Filtros -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter"></i> Filtros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Catalogo" method="get">
+                        <div class="mb-3">
+                            <label asp-for="Filtros.Nombre" class="form-label"></label>
+                            <input asp-for="Filtros.Nombre" class="form-control" placeholder="Buscar por nombre o código...">
+                            <span asp-validation-for="Filtros.Nombre" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="Filtros.CreditosMin" class="form-label"></label>
+                                    <input asp-for="Filtros.CreditosMin" type="number" class="form-control" min="0">
+                                    <span asp-validation-for="Filtros.CreditosMin" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="Filtros.CreditosMax" class="form-label"></label>
+                                    <input asp-for="Filtros.CreditosMax" type="number" class="form-control" min="0">
+                                    <span asp-validation-for="Filtros.CreditosMax" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="Filtros.HorarioDesde" class="form-label"></label>
+                                    <input asp-for="Filtros.HorarioDesde" type="time" class="form-control">
+                                    <span asp-validation-for="Filtros.HorarioDesde" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="Filtros.HorarioHasta" class="form-label"></label>
+                                    <input asp-for="Filtros.HorarioHasta" type="time" class="form-control">
+                                    <span asp-validation-for="Filtros.HorarioHasta" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                            <a asp-action="LimpiarFiltros" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Limpiar Filtros
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Cursos -->
+        <div class="col-md-8 col-lg-9">
+            @if (Model.FiltrosAplicados)
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Se encontraron <strong>@Model.TotalCursos</strong> curso(s) con los filtros aplicados.
+                </div>
+            }
+
+            @if (Model.Cursos.Any())
+            {
+                <div class="row">
+                    @foreach (var curso in Model.Cursos)
+                    {
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <strong>@curso.Codigo</strong>
+                                    </h6>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title">@curso.Nombre</h6>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-award"></i> <strong>@curso.Creditos</strong> crédito(s)
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> @curso.HorarioInicio.ToString("HH:mm") - @curso.HorarioFin.ToString("HH:mm")
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-users"></i> Cupo: <strong>@curso.CupoMaximo</strong> estudiantes
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="mt-auto">
+                                        <a asp-action="Detalle" asp-route-id="@curso.Id" class="btn btn-outline-primary btn-sm w-100">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No se encontraron cursos</h5>
+                    @if (Model.FiltrosAplicados)
+                    {
+                        <p class="text-muted">
+                            Intenta modificar los filtros para obtener más resultados.
+                        </p>
+                        <a asp-action="LimpiarFiltros" class="btn btn-outline-primary">
+                            <i class="fas fa-times"></i> Limpiar Filtros
+                        </a>
+                    }
+                    else
+                    {
+                        <p class="text-muted">
+                            No hay cursos activos disponibles en este momento.
+                        </p>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
