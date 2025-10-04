@@ -6,6 +6,14 @@ using parcial.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Information);
+}
+
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "DataSource=app.db;Cache=Shared";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -90,6 +98,7 @@ if (builder.Environment.IsProduction())
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    app.UseDeveloperExceptionPage();
 }
 else
 {
@@ -98,7 +107,8 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Deshabilitar HTTPS redirect en contenedores
+// app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();
@@ -117,30 +127,36 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
-// Ejecutar seed data
+// Ejecutar seed data y migraciones
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        // Aplicar migraciones pendientes
+        logger.LogInformation("Aplicando migraciones de base de datos...");
+        await context.Database.MigrateAsync();
+        
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
-        // Asegurar que la base de datos existe y las migraciones están aplicadas
-        await context.Database.EnsureCreatedAsync();
-        
+        logger.LogInformation("Ejecutando seed data...");
         await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
+        
+        logger.LogInformation("Inicialización de base de datos completada exitosamente.");
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error durante el seed data.");
+        logger.LogError(ex, "Error crítico durante la inicialización de la base de datos: {Error}", ex.Message);
         
-        // En producción, no fallar si hay problemas con seed data
+        // En producción, intentar continuar sin seed data
         if (app.Environment.IsProduction())
         {
-            logger.LogWarning("Continuando sin seed data en producción debido a error: {Error}", ex.Message);
+            logger.LogWarning("Continuando sin seed data completo en producción...");
         }
         else
         {

@@ -1,6 +1,23 @@
 # Render Deployment Configuration
 
-## Variables de Entorno Requeridas
+## Debugging en Render
+
+Si encuentras errores después del despliegue:
+
+1. **Verificar logs**: Ve a tu servicio en Render → Logs tab
+2. **Health check**: Visita `/Health` en tu aplicación desplegada
+3. **Variables de entorno**: Verifica que estén configuradas correctamente
+
+### Health Check Endpoint
+`https://tu-app.onrender.com/Health`
+
+Este endpoint te mostrará:
+- Status de la aplicación
+- Información de la base de datos  
+- Variables de entorno
+- Detalles del sistema
+
+### Variables de Entorno Requeridas
 
 ```bash
 ASPNETCORE_ENVIRONMENT=Production
