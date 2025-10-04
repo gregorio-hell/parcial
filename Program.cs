@@ -8,15 +8,24 @@ var builder = WebApplication.CreateBuilder(args);
 // Configurar logging básico
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Configurar base de datos con fallback
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
                       ?? "DataSource=app.db;Cache=Shared";
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+Console.WriteLine($"Using connection string: {connectionString}");
 
-// Identity básico
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlite(connectionString);
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+    }
+});
+
+// Identity MUY básico - sin roles por ahora
 builder.Services.AddDefaultIdentity<IdentityUser>(options => {
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = false;
@@ -24,74 +33,39 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => {
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 3;
+    options.User.RequireUniqueEmail = false;
 })
-.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Configurar autorización y cookies
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.AccessDeniedPath = "/Home/AccessDenied";
-    options.LoginPath = "/Identity/Account/Login";
-    options.LogoutPath = "/Identity/Account/Logout";
-});
-
-// MVC
+// MVC básico
 builder.Services.AddControllersWithViews();
 
-// Servicios básicos
-builder.Services.AddScoped<IMatriculaService, MatriculaService>();
-builder.Services.AddDistributedMemoryCache(); // Solo memoria, sin Redis
-builder.Services.AddScoped<ISesionService, SesionService>();
-builder.Services.AddScoped<ICursosCache, CursosCache>();
+// Cache en memoria solamente
+builder.Services.AddDistributedMemoryCache();
+
+// Servicios básicos - comentados por ahora
+// builder.Services.AddScoped<IMatriculaService, MatriculaService>();
+// builder.Services.AddScoped<ISesionService, SesionService>();
+// builder.Services.AddScoped<ICursosCache, CursosCache>();
 
 var app = builder.Build();
 
-// Inicializar base de datos automáticamente
-using (var scope = app.Services.CreateScope())
+// Inicializar base de datos de forma MUY simple
+try
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     
-    try
-    {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        
-        // Aplicar migraciones automáticamente
-        logger.LogInformation("Aplicando migraciones de base de datos...");
-        await context.Database.MigrateAsync();
-        
-        // Ejecutar seed data
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        
-        logger.LogInformation("Ejecutando seed data...");
-        await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
-        
-        // Verificar que el coordinador fue creado correctamente
-        var coordinador = await userManager.FindByEmailAsync("coordinador@usmp.pe");
-        if (coordinador != null)
-        {
-            var roles = await userManager.GetRolesAsync(coordinador);
-            logger.LogInformation("Coordinador creado: {Email}, Roles: {Roles}", 
-                coordinador.Email, string.Join(", ", roles));
-        }
-        else
-        {
-            logger.LogWarning("¡ADVERTENCIA! No se pudo crear el coordinador");
-        }
-        
-        logger.LogInformation("Base de datos inicializada correctamente.");
-    }
-    catch (Exception ex)
-    {
-        var logger2 = services.GetRequiredService<ILogger<Program>>();
-        logger2.LogError(ex, "Error al inicializar la base de datos: {Error}", ex.Message);
-        // En producción, continuar sin fallar
-    }
+    Console.WriteLine("Ensuring database is created...");
+    await context.Database.EnsureCreatedAsync();
+    Console.WriteLine("Database ready!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Database setup error: {ex.Message}");
 }
 
-// Pipeline simple
+// Pipeline ultra simple
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -101,7 +75,6 @@ else
     app.UseExceptionHandler("/Home/Error");
 }
 
-// No HTTPS redirect en contenedores
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
@@ -113,4 +86,5 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
+Console.WriteLine("App starting...");
 app.Run();
