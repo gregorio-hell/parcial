@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "Portal Universitario";
+}
+
+<div class="text-center">
+    <h1 class="display-4">
+        <i class="fas fa-university text-primary"></i> Portal Universitario
+    </h1>
+    <p class="lead">Gestiona tus cursos y matrículas de manera fácil y eficiente</p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Catálogo de Cursos</h5>
+                <p class="card-text">Explora todos los cursos disponibles, filtra por criterios específicos y encuentra el curso perfecto para ti.</p>
+                <a asp-controller="Cursos" asp-action="Catalogo" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Ver Catálogo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-user-graduate fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Mis Matrículas</h5>
+                <p class="card-text">Revisa el estado de tus inscripciones, consulta horarios y gestiona tus cursos matriculados.</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Matriculas" asp-action="MisMatriculas" class="btn btn-success">
+                        <i class="fas fa-list"></i> Ver Matrículas
+                    </a>
+                }
+                else
+                {
+                    <a href="/Identity/Account/Login" class="btn btn-success">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (User.IsInRole("Coordinador"))
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-cog fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Panel de Coordinador</h5>
+                    <p class="card-text">Herramientas para coordinadores académicos para gestionar cursos, estudiantes y matrículas.</p>
+                    <a asp-controller="Coordinador" asp-action="Index" class="btn btn-warning">
+                        <i class="fas fa-user-tie"></i> Ir al Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-info-circle"></i> Información Importante
+            </h5>
+            <p>Para acceder a todas las funcionalidades del portal, debes estar registrado e iniciar sesión.</p>
+            <hr>
+            <p class="mb-0">
+                ¿Eres coordinador académico? Usa las credenciales: 
+                <strong>coordinador@usmp.pe</strong> / <strong>Coordinador123!</strong>
+            </p>
+        </div>
+    </div>
+</div>

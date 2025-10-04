@@ -1,0 +1,8 @@
+@model parcial.ViewModels.UltimoCursoVisitadoViewModel
+
+<li class="nav-item">
+    <a class="nav-link text-warning fw-bold" asp-controller="Cursos" asp-action="Detalle" asp-route-id="@Model.CursoId">
+        <i class="fas fa-arrow-left me-1"></i>
+        Volver al curso @Model.NombreCurso
+    </a>
+</li>

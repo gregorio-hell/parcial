@@ -1,0 +1,68 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle fa-5x text-warning mb-4"></i>
+                <h1 class="display-4 text-danger mb-3">¡Oops! Algo salió mal</h1>
+                <p class="lead mb-4">Lo sentimos, ha ocurrido un error inesperado. Por favor, intenta de nuevo.</p>
+                
+                <div class="d-grid gap-2 d-md-block">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home"></i> Volver al Inicio
+                    </a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Página Anterior
+                    </a>
+                </div>
+            </div>
+            
+            @if (Model?.ShowRequestId == true)
+            {
+                <div class="alert alert-info mt-4" role="alert">
+                    <strong>ID de Solicitud:</strong> <code>@Model.RequestId</code>
+                    <br>
+                    <small class="text-muted">Por favor, proporciona este ID si contactas al soporte técnico.</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (!ViewContext.HttpContext.Request.IsHttps && ViewContext.HttpContext.RequestServices.GetService<IWebHostEnvironment>()?.IsDevelopment() == true)
+{
+    <div class="container mt-4">
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Modo de Desarrollo</h4>
+            <p>
+                Para ver información detallada del error, asegúrate de que la variable de entorno 
+                <strong>ASPNETCORE_ENVIRONMENT</strong> esté configurada como <strong>Development</strong>.
+            </p>
+            <hr>
+            <p class="mb-0">
+                <strong>Importante:</strong> El entorno de desarrollo no debe estar habilitado en aplicaciones desplegadas
+                ya que puede mostrar información sensible a los usuarios finales.
+            </p>
+        </div>
+    </div>
+}
+
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: white;
+    }
+    
+    .container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 3rem;
+        color: #333;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+</style>

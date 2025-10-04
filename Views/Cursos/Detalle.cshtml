@@ -1,0 +1,275 @@
+@model parcial.ViewModels.DetalleCursoViewModel
+@{
+    ViewData["Title"] = $"Detalle - {Model.Curso.Nombre}";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Navegación -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a asp-action="Catalogo" class="text-decoration-none">
+                            <i class="fas fa-arrow-left"></i> Catálogo de Cursos
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Curso.Codigo</li>
+                </ol>
+            </nav>
+
+            <!-- Mensajes -->
+            @if (TempData["MensajeExito"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> 
+                    <strong>¡Éxito!</strong> @TempData["MensajeExito"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["MensajeError"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Error:</strong> @TempData["MensajeError"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Tarjeta Principal del Curso -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0">
+                                <i class="fas fa-graduation-cap"></i> @Model.Curso.Codigo
+                            </h4>
+                        </div>
+                        <div class="col-auto">
+                            @if (Model.Curso.Activo)
+                            {
+                                <span class="badge bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactivo</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <h3 class="card-title mb-4">@Model.Curso.Nombre</h3>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <h6 class="text-muted mb-1">
+                                    <i class="fas fa-award text-warning"></i> Créditos
+                                </h6>
+                                <p class="h5 mb-0">@Model.Curso.Creditos crédito(s)</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <h6 class="text-muted mb-1">
+                                    <i class="fas fa-clock text-info"></i> Horario
+                                </h6>
+                                <p class="h6 mb-0">
+                                    @Model.Curso.HorarioInicio.ToString("HH:mm") - @Model.Curso.HorarioFin.ToString("HH:mm")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <h6 class="text-muted mb-1">
+                                    <i class="fas fa-users text-primary"></i> Cupo Total
+                                </h6>
+                                <p class="h6 mb-0">@Model.Curso.CupoMaximo estudiantes</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <h6 class="text-muted mb-1">
+                                    <i class="fas fa-user-check text-success"></i> Matriculados
+                                </h6>
+                                <p class="h6 mb-0">
+                                    @Model.MatriculasConfirmadas estudiante(s)
+                                    @if (Model.CupoDisponible)
+                                    {
+                                        <small class="text-success">
+                                            (@(Model.Curso.CupoMaximo - Model.MatriculasConfirmadas) cupo(s) disponible(s))
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-danger">(Cupo completo)</small>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de progreso del cupo -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Ocupación del curso</span>
+                            <span>@Model.MatriculasConfirmadas / @Model.Curso.CupoMaximo</span>
+                        </div>
+                        <div class="progress">
+                            @{
+                                var porcentajeOcupacion = Model.Curso.CupoMaximo > 0 
+                                    ? (double)Model.MatriculasConfirmadas / Model.Curso.CupoMaximo * 100 
+                                    : 0;
+                                var claseProgress = porcentajeOcupacion >= 90 ? "bg-danger" : 
+                                                   porcentajeOcupacion >= 70 ? "bg-warning" : "bg-success";
+                            }
+                            <div class="progress-bar @claseProgress" 
+                                 role="progressbar" 
+                                 style="width: @porcentajeOcupacion.ToString("F1")%"
+                                 aria-valuenow="@Model.MatriculasConfirmadas" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="@Model.Curso.CupoMaximo">
+                                @porcentajeOcupacion.ToString("F1")%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón de Inscripción -->
+                    <div class="d-grid">
+                        @if (!Model.UsuarioAutenticado)
+                        {
+                            <a href="/Identity/Account/Login" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión para Inscribirse
+                            </a>
+                        }
+                        else if (Model.YaMatriculado)
+                        {
+                            <button class="btn btn-success btn-lg" disabled>
+                                <i class="fas fa-check"></i> Ya Estás Inscrito en Este Curso
+                            </button>
+                        }
+                        else if (!Model.CupoDisponible)
+                        {
+                            <button class="btn btn-danger btn-lg" disabled>
+                                <i class="fas fa-times"></i> Cupo Completo - No Disponible
+                            </button>
+                        }
+                        else
+                        {
+                            <form asp-action="Inscribirse" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Curso.Id" />
+                                <button type="submit" 
+                                        class="btn btn-primary btn-lg w-100"
+                                        onclick="return confirm('¿Estás seguro de que deseas inscribirte en este curso?')">
+                                    <i class="fas fa-user-plus"></i> Inscribirse en Este Curso
+                                </button>
+                            </form>
+                        }
+                    </div>
+
+                    @if (Model.UsuarioAutenticado && !Model.YaMatriculado && Model.CupoDisponible)
+                    {
+                        <small class="form-text text-muted text-center d-block mt-2">
+                            <i class="fas fa-info-circle"></i> 
+                            Tu inscripción quedará pendiente de confirmación por el coordinador.
+                        </small>
+                    }
+                </div>
+            </div>
+
+            <!-- Información de Validaciones -->
+            @if (Model.UsuarioAutenticado && !Model.YaMatriculado)
+            {
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt text-primary"></i> Validaciones de Inscripción
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-check text-success me-2"></i>
+                                    <small>Usuario autenticado</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    @if (Model.CupoDisponible)
+                                    {
+                                        <i class="fas fa-users text-success me-2"></i>
+                                        <small>Cupo disponible</small>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-users text-danger me-2"></i>
+                                        <small>Cupo completo</small>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock text-info me-2"></i>
+                                    <small>Se verificarán conflictos de horario</small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <small class="text-muted">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <strong>Nota:</strong> El sistema validará automáticamente que no tengas conflictos de horario 
+                            con otros cursos en los que ya estés matriculado.
+                        </small>
+                    </div>
+                </div>
+            }
+
+            <!-- Información Adicional -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                            <h6>Duración del Semestre</h6>
+                            <p class="text-muted small">Consulta las fechas específicas con el coordinador académico</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-book-open fa-2x text-info mb-2"></i>
+                            <h6>Prerrequisitos</h6>
+                            <p class="text-muted small">Verifica los prerrequisitos con el coordinador antes de inscribirte</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .info-item {
+        border-left: 3px solid #007bff;
+        padding-left: 1rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+</style>
