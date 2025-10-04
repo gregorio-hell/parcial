@@ -172,18 +172,38 @@ services.AddStackExchangeRedisCache(options =>
 
 ## 🚀 Despliegue
 
-### Variables de Entorno
-```bash
-ASPNETCORE_ENVIRONMENT=Production
-ConnectionStrings__DefaultConnection="..."
-ConnectionStrings__Redis="..."
+### Rama: deploy/render
+**Requerido**: Desplegar en Render como Web Service.
+
+**Variables mínimas**:
+- `ASPNETCORE_ENVIRONMENT=Production`
+- `ASPNETCORE_URLS=http://0.0.0.0:${PORT}`
+- `ConnectionStrings__DefaultConnection=DataSource=app.db;Cache=Shared`
+- `Redis__ConnectionString=<OPTIONAL_REDIS_URL>`
+
+**Verificar online**: login, catálogo, inscripción y panel coordinador.
+
+### Configuración Render.com
+1. **Tipo**: Web Service
+2. **Runtime**: Docker
+3. **Repository**: Conectar a GitHub
+4. **Branch**: `deploy/render`
+5. **Build**: Automático via Dockerfile
+6. **Port**: Detectado automáticamente desde `${PORT}`
+
+### Docker Container
+```dockerfile
+# El proyecto incluye Dockerfile optimizado para .NET 9
+# Construcción multi-stage para optimizar tamaño
+# SQLite incluido para simplicidad de base de datos
 ```
 
-### Render.com
-1. Conectar repositorio GitHub
-2. Configurar build: `dotnet publish -c Release -o out`
-3. Configurar start: `dotnet out/parcial.dll`
-4. Agregar variables de entorno
+### Post-Despliegue
+Verificar funcionalidades:
+- ✅ Login con credenciales predeterminadas
+- ✅ Catálogo de cursos con filtros
+- ✅ Sistema de inscripción
+- ✅ Panel coordinador (solo coordinadores)
 
 ## 👥 Contribución
 
