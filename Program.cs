@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using parcial.Data;
-using parcial.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,81 +8,37 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-// Configurar base de datos con fallback
+// Configurar base de datos OPCIONAL
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
                       ?? "DataSource=app.db;Cache=Shared";
 
 Console.WriteLine($"Using connection string: {connectionString}");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlite(connectionString);
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableSensitiveDataLogging();
-    }
-});
+// Comentar DB por ahora para aislar el problema
+// builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// {
+//     options.UseSqlite(connectionString);
+// });
 
-// Identity MUY básico - sin roles por ahora
-builder.Services.AddDefaultIdentity<IdentityUser>(options => {
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 3;
-    options.User.RequireUniqueEmail = false;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>();
-
-// MVC básico
+// MVC básico SOLAMENTE
 builder.Services.AddControllersWithViews();
-
-// Cache en memoria solamente
-builder.Services.AddDistributedMemoryCache();
-
-// Servicios básicos - comentados por ahora
-// builder.Services.AddScoped<IMatriculaService, MatriculaService>();
-// builder.Services.AddScoped<ISesionService, SesionService>();
-// builder.Services.AddScoped<ICursosCache, CursosCache>();
 
 var app = builder.Build();
 
-// Inicializar base de datos de forma MUY simple
-try
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    
-    Console.WriteLine("Ensuring database is created...");
-    await context.Database.EnsureCreatedAsync();
-    Console.WriteLine("Database ready!");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Database setup error: {ex.Message}");
-}
+// NO inicializar base de datos por ahora
+Console.WriteLine("Skipping database setup for now...");
 
-// Pipeline ultra simple
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-}
-
+// Pipeline ultra simple - SIN manejo de errores complejo
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+
+// Mapear rutas básicas
+app.MapGet("/", () => "Portal Universitario - Aplicación funcionando!");
+app.MapGet("/health", () => "OK");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.MapRazorPages();
 
 Console.WriteLine("App starting...");
 app.Run();
