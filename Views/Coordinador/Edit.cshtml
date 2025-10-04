@@ -1,0 +1,88 @@
+@model parcial.Models.Curso
+
+@{
+    ViewData["Title"] = "Editar Curso";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i>
+                        Editar Curso: @Model.Codigo
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Codigo" class="form-label">Código del Curso</label>
+                                <input asp-for="Codigo" class="form-control" />
+                                <span asp-validation-for="Codigo" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Creditos" class="form-label">Créditos</label>
+                                <input asp-for="Creditos" class="form-control" type="number" min="1" max="6" />
+                                <span asp-validation-for="Creditos" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nombre" class="form-label">Nombre del Curso</label>
+                            <input asp-for="Nombre" class="form-control" />
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CupoMaximo" class="form-label">Cupo Máximo</label>
+                            <input asp-for="CupoMaximo" class="form-control" type="number" min="1" max="100" />
+                            <span asp-validation-for="CupoMaximo" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="HorarioInicio" class="form-label">Horario de Inicio</label>
+                                <input asp-for="HorarioInicio" class="form-control" type="time" />
+                                <span asp-validation-for="HorarioInicio" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="HorarioFin" class="form-label">Horario de Fin</label>
+                                <input asp-for="HorarioFin" class="form-control" type="time" />
+                                <span asp-validation-for="HorarioFin" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="Activo" class="form-check-input" />
+                                <label asp-for="Activo" class="form-check-label">
+                                    Curso activo (disponible para inscripciones)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver al Panel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Actualizar Curso
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

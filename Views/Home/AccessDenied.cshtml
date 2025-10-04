@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Acceso Denegado";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="fas fa-ban fa-5x text-danger mb-4"></i>
+                    <h2 class="text-danger mb-3">Acceso Denegado</h2>
+                    <p class="lead text-muted mb-4">
+                        No tienes permisos para acceder a esta área del sistema.
+                    </p>
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Panel de Coordinador:</strong> Solo los usuarios con rol de Coordinador pueden acceder a esta funcionalidad.
+                    </div>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-home"></i>
+                            Ir al Inicio
+                        </a>
+                        <a asp-controller="Cursos" asp-action="Catalogo" class="btn btn-outline-primary">
+                            <i class="fas fa-book"></i>
+                            Ver Catálogo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

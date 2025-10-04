@@ -1,0 +1,166 @@
+@model parcial.Models.Curso
+
+@{
+    ViewData["Title"] = "Gestionar Matrículas";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-users"></i>
+            Matrículas del Curso: @Model.Nombre
+        </h2>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Panel
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">@Model.Codigo</h5>
+                    <p class="card-text">Código</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">@Model.Creditos</h5>
+                    <p class="card-text">Créditos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">@Model.Matriculas.Count() / @Model.CupoMaximo</h5>
+                    <p class="card-text">Matrículas / Cupo</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">@Model.Matriculas.Count(m => m.Estado == parcial.Models.EstadoMatricula.Confirmada)</h5>
+                    <p class="card-text">Confirmadas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i>
+                Lista de Matrículas
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Matriculas.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Estudiante</th>
+                                <th>Email</th>
+                                <th>Fecha de Registro</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var matricula in Model.Matriculas.OrderBy(m => m.FechaRegistro))
+                            {
+                                <tr class="@(matricula.Estado == parcial.Models.EstadoMatricula.Cancelada ? "table-danger" : 
+                                           matricula.Estado == parcial.Models.EstadoMatricula.Confirmada ? "table-success" : "")">
+                                    <td>
+                                        <strong>@matricula.Usuario.UserName</strong>
+                                    </td>
+                                    <td>@matricula.Usuario.Email</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @matricula.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+                                    </td>
+                                    <td>
+                                        @switch (matricula.Estado)
+                                        {
+                                            case parcial.Models.EstadoMatricula.Pendiente:
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock"></i> Pendiente
+                                                </span>
+                                                break;
+                                            case parcial.Models.EstadoMatricula.Confirmada:
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Confirmada
+                                                </span>
+                                                break;
+                                            case parcial.Models.EstadoMatricula.Cancelada:
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Cancelada
+                                                </span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (matricula.Estado != parcial.Models.EstadoMatricula.Cancelada)
+                                        {
+                                            <div class="btn-group" role="group">
+                                                @if (matricula.Estado != parcial.Models.EstadoMatricula.Confirmada)
+                                                {
+                                                    <form asp-action="ConfirmarMatricula" method="post" style="display: inline;">
+                                                        <input type="hidden" name="id" value="@matricula.Id" />
+                                                        <input type="hidden" name="cursoId" value="@Model.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-success" 
+                                                                onclick="return confirm('¿Confirmar esta matrícula?')" title="Confirmar">
+                                                            <i class="fas fa-check"></i> Confirmar
+                                                        </button>
+                                                    </form>
+                                                }
+                                                <form asp-action="CancelarMatricula" method="post" style="display: inline;">
+                                                    <input type="hidden" name="id" value="@matricula.Id" />
+                                                    <input type="hidden" name="cursoId" value="@Model.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                                            onclick="return confirm('¿Cancelar esta matrícula?')" title="Cancelar">
+                                                        <i class="fas fa-times"></i> Cancelar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                <i class="fas fa-ban"></i> Sin acciones
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay matrículas registradas</h5>
+                    <p class="text-muted">Este curso aún no tiene estudiantes inscritos.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
