@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using parcial.Data;
 using parcial.Services;
 
@@ -16,8 +17,23 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
+// Configurar cache distribuido - usar MemoryCache como fallback para demo
+builder.Services.AddDistributedMemoryCache();
+
+// Configurar sesiones
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Name = "ParcialSession";
+});
+
 // Registrar servicios personalizados
 builder.Services.AddScoped<IMatriculaService, MatriculaService>();
+builder.Services.AddScoped<ISesionService, SesionService>();
+builder.Services.AddScoped<ICursosCache, CursosCache>();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -38,6 +54,9 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Configurar sesiones
+app.UseSession();
 
 app.MapStaticAssets();
 
