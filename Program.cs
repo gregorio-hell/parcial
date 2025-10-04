@@ -28,6 +28,14 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => {
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Configurar autorización y cookies
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.AccessDeniedPath = "/Home/AccessDenied";
+    options.LoginPath = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+});
+
 // MVC
 builder.Services.AddControllersWithViews();
 
@@ -59,6 +67,19 @@ using (var scope = app.Services.CreateScope())
         
         logger.LogInformation("Ejecutando seed data...");
         await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
+        
+        // Verificar que el coordinador fue creado correctamente
+        var coordinador = await userManager.FindByEmailAsync("coordinador@usmp.pe");
+        if (coordinador != null)
+        {
+            var roles = await userManager.GetRolesAsync(coordinador);
+            logger.LogInformation("Coordinador creado: {Email}, Roles: {Roles}", 
+                coordinador.Email, string.Join(", ", roles));
+        }
+        else
+        {
+            logger.LogWarning("¡ADVERTENCIA! No se pudo crear el coordinador");
+        }
         
         logger.LogInformation("Base de datos inicializada correctamente.");
     }
