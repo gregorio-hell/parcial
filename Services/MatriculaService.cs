@@ -64,7 +64,32 @@ public class MatriculaService : IMatriculaService
             return "El curso ha alcanzado su cupo máximo.";
         }
 
+        // Verificar solapamiento de horarios con otros cursos matriculados
+        var cursosMatriculados = await _context.Matriculas
+            .Where(m => m.UsuarioId == usuarioId && m.Estado != EstadoMatricula.Cancelada)
+            .Include(m => m.Curso)
+            .Select(m => m.Curso)
+            .ToListAsync();
+
+        foreach (var cursoMatriculado in cursosMatriculados)
+        {
+            if (cursoMatriculado != null && SesolapanHorarios(curso, cursoMatriculado))
+            {
+                return $"El horario de este curso se solapa con el curso '{cursoMatriculado.Codigo} - {cursoMatriculado.Nombre}' " +
+                       $"({cursoMatriculado.HorarioInicio:HH:mm} - {cursoMatriculado.HorarioFin:HH:mm}).";
+            }
+        }
+
         return string.Empty; // No hay errores
+    }
+
+    /// <summary>
+    /// Verifica si dos cursos tienen horarios que se solapan
+    /// </summary>
+    private bool SesolapanHorarios(Curso curso1, Curso curso2)
+    {
+        // Dos intervalos se solapan si: inicio1 < fin2 && inicio2 < fin1
+        return curso1.HorarioInicio < curso2.HorarioFin && curso2.HorarioInicio < curso1.HorarioFin;
     }
 
     /// <summary>
