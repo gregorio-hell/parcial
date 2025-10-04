@@ -45,18 +45,21 @@
         </div>
     </div>
 
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body text-center">
-                <i class="fas fa-cog fa-3x text-warning mb-3"></i>
-                <h5 class="card-title">Administración</h5>
-                <p class="card-text">Herramientas para coordinadores académicos para gestionar cursos, estudiantes y matrículas.</p>
-                <a href="#" class="btn btn-warning">
-                    <i class="fas fa-tools"></i> Administrar
-                </a>
+    @if (User.IsInRole("Coordinador"))
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-cog fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Panel de Coordinador</h5>
+                    <p class="card-text">Herramientas para coordinadores académicos para gestionar cursos, estudiantes y matrículas.</p>
+                    <a asp-controller="Coordinador" asp-action="Index" class="btn btn-warning">
+                        <i class="fas fa-user-tie"></i> Ir al Panel
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
 <div class="row mt-4">
@@ -69,7 +72,7 @@
             <hr>
             <p class="mb-0">
                 ¿Eres coordinador académico? Usa las credenciales: 
-                <strong>coordinador@universidad.edu</strong> / <strong>Coordinador123!</strong>
+                <strong>coordinador@usmp.pe</strong> / <strong>Coordinador123!</strong>
             </p>
         </div>
     </div>

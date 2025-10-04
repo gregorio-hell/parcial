@@ -116,7 +116,7 @@ public class ApplicationDbContext : IdentityDbContext
         }
 
         // Crear usuario coordinador si no existe
-        var coordinadorEmail = "coordinador@universidad.edu";
+        var coordinadorEmail = "coordinador@usmp.pe";
         var coordinador = await userManager.FindByEmailAsync(coordinadorEmail);
         
         if (coordinador == null)

@@ -14,6 +14,13 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => {
     options.SignIn.RequireConfirmedAccount = false;
+    // Relajar requisitos de contraseña
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 3;
+    options.Password.RequiredUniqueChars = 1;
 })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -26,8 +33,25 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Identity/Account/Login";
 });
 
-// Configurar cache distribuido - usar MemoryCache como fallback para demo
-builder.Services.AddDistributedMemoryCache();
+// Configurar cache distribuido - Redis en producción, memoria en desarrollo
+if (builder.Environment.IsProduction())
+{
+    // Redis en producción
+    var redisUrl = builder.Configuration.GetConnectionString("Redis") 
+                   ?? Environment.GetEnvironmentVariable("REDIS_URL") 
+                   ?? "localhost:6379";
+    
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisUrl;
+        options.InstanceName = "ParcialUniversidad";
+    });
+}
+else
+{
+    // Memoria en desarrollo
+    builder.Services.AddDistributedMemoryCache();
+}
 
 // Configurar sesiones
 builder.Services.AddSession(options =>
@@ -45,6 +69,13 @@ builder.Services.AddScoped<ICursosCache, CursosCache>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+// Configurar puerto para Render
+if (builder.Environment.IsProduction())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

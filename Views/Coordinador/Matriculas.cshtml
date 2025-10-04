@@ -87,9 +87,9 @@
                                 <tr class="@(matricula.Estado == parcial.Models.EstadoMatricula.Cancelada ? "table-danger" : 
                                            matricula.Estado == parcial.Models.EstadoMatricula.Confirmada ? "table-success" : "")">
                                     <td>
-                                        <strong>@matricula.Usuario.UserName</strong>
+                                        <strong>@(matricula.Usuario?.UserName ?? "Usuario no encontrado")</strong>
                                     </td>
-                                    <td>@matricula.Usuario.Email</td>
+                                    <td>@(matricula.Usuario?.Email ?? "Email no disponible")</td>
                                     <td>
                                         <small class="text-muted">
                                             @matricula.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
