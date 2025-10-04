@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace parcial.Models;
 
@@ -22,6 +23,7 @@ public class Matricula
     [Display(Name = "Estado")]
     public EstadoMatricula Estado { get; set; } = EstadoMatricula.Pendiente;
 
-    // Propiedad de navegación
+    // Propiedades de navegación
     public virtual Curso? Curso { get; set; }
+    public virtual IdentityUser? Usuario { get; set; }
 }

@@ -87,12 +87,12 @@ public class ApplicationDbContext : IdentityDbContext
 
             // Relación con Curso
             entity.HasOne(e => e.Curso)
-                .WithMany()
+                .WithMany(c => c.Matriculas)
                 .HasForeignKey(e => e.CursoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Relación con Usuario (Identity)
-            entity.HasOne<Microsoft.AspNetCore.Identity.IdentityUser>()
+            entity.HasOne(e => e.Usuario)
                 .WithMany()
                 .HasForeignKey(e => e.UsuarioId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -116,7 +116,7 @@ public class ApplicationDbContext : IdentityDbContext
         }
 
         // Crear usuario coordinador si no existe
-        var coordinadorEmail = "coordinador@universidad.edu";
+        var coordinadorEmail = "coordinador@usmp.pe";
         var coordinador = await userManager.FindByEmailAsync(coordinadorEmail);
         
         if (coordinador == null)

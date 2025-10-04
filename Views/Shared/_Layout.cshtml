@@ -41,6 +41,14 @@
                                     <i class="fas fa-user-graduate"></i> Mis Matrículas
                                 </a>
                             </li>
+                            @if (User.IsInRole("Coordinador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Coordinador" asp-action="Index">
+                                        <i class="fas fa-user-tie"></i> Panel Coordinador
+                                    </a>
+                                </li>
+                            }
                         }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">

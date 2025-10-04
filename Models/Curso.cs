@@ -37,6 +37,9 @@ public class Curso
     [Display(Name = "Activo")]
     public bool Activo { get; set; } = true;
 
+    // Propiedades de navegación
+    public virtual ICollection<Matricula> Matriculas { get; set; } = new List<Matricula>();
+
     // Validación personalizada para asegurar que HorarioInicio < HorarioFin
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
