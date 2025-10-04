@@ -28,8 +28,8 @@ Redis__ConnectionString=<YOUR_REDIS_CONNECTION_STRING>
 Una vez desplegado, verificar:
 
 ✅ **Login**: Acceso con credenciales predeterminadas
-- Estudiante: `estudiante@usmp.pe` / `123`
-- Coordinador: `coordinador@usmp.pe` / `123`
+- Estudiante: `estudiante@usmp.pe` / `Estudiante123!`
+- Coordinador: `coordinador@usmp.pe` / `Coordinador123!`
 
 ✅ **Catálogo**: Navegación y filtros de cursos
 
