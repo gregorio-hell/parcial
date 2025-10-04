@@ -17,7 +17,21 @@ namespace parcial.Controllers
             _env = env;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
+        {
+            var healthInfo = new
+            {
+                Status = "Healthy",
+                Environment = _env.EnvironmentName,
+                Timestamp = DateTime.UtcNow,
+                Application = GetApplicationInfo(),
+                Database = "Checking..."
+            };
+
+            return Json(healthInfo);
+        }
+
+        public async Task<IActionResult> Full()
         {
             var healthInfo = new
             {
@@ -67,8 +81,10 @@ namespace parcial.Controllers
                 Runtime = Environment.Version.ToString(),
                 MachineName = Environment.MachineName,
                 ProcessorCount = Environment.ProcessorCount,
-                WorkingSet = Environment.WorkingSet,
-                OSVersion = Environment.OSVersion.ToString()
+                WorkingDirectory = Environment.CurrentDirectory,
+                Environment = Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>()
+                    .Where(e => e.Key.ToString()?.StartsWith("ASPNETCORE") == true || e.Key.ToString()?.Contains("CONNECTION") == true)
+                    .ToDictionary(e => e.Key, e => e.Value)
             };
         }
     }

@@ -1,46 +1,38 @@
 # Usar la imagen base de .NET 9 SDK para build
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /app
+WORKDIR /src
 
 # Copiar archivos de proyecto y restaurar dependencias
-COPY *.csproj ./
+COPY *.csproj .
 RUN dotnet restore
 
-# Copiar código fuente
-COPY . ./
-
-# Publicar la aplicación
-RUN dotnet publish -c Release -o out
+# Copiar todo el código fuente
+COPY . .
+RUN dotnet publish -c Release -o /app/publish
 
 # Usar la imagen runtime de .NET 9 para producción
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
-# Crear usuario no-root para seguridad
-RUN addgroup --system --gid 1001 dotnet \
-    && adduser --system --uid 1001 --ingroup dotnet dotnet
+# Instalar herramientas necesarias
+RUN apt-get update && \
+    apt-get install -y sqlite3 curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Instalar SQLite
-RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+# Copiar archivos publicados
+COPY --from=build /app/publish .
 
-# Crear y configurar directorio de datos
-RUN mkdir -p /app/data && chown -R dotnet:dotnet /app
+# Crear directorio para base de datos con permisos amplios
+RUN mkdir -p /tmp/data && chmod 777 /tmp/data
 
-# Copiar archivos publicados y script de inicio
-COPY --from=build /app/out .
-COPY start.sh .
-RUN chmod +x start.sh && chown -R dotnet:dotnet /app
-
-# Cambiar a usuario no-root
-USER dotnet
-
-# Configurar variables de entorno
+# Variables de entorno para Render
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-ENV ASPNETCORE_HTTP_PORTS=8080
+ENV ASPNETCORE_URLS=http://0.0.0.0:$PORT
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 
-# Exponer puerto
-EXPOSE 8080
+# Puerto por defecto
+EXPOSE $PORT
 
-# Comando de inicio
-ENTRYPOINT ["./start.sh"]
+# Comando de inicio simple
+CMD ["dotnet", "parcial.dll"]

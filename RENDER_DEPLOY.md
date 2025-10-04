@@ -1,4 +1,37 @@
-# Render Deployment Configuration
+# Render Deployment Configuration - FIXED VERSION
+
+## Configuración en Render Dashboard
+
+1. **Tipo de Servicio**: Web Service
+2. **Runtime**: Docker  
+3. **Región**: Oregon (recomendado)
+4. **Auto-Deploy**: Yes
+
+## Variables de Entorno CRÍTICAS ⚠️
+
+**COPIA EXACTAMENTE ESTAS VARIABLES:**
+
+```
+PORT=$PORT
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://0.0.0.0:$PORT
+ConnectionStrings__DefaultConnection=DataSource=/tmp/data/app.db;Cache=Shared
+```
+
+## Endpoints de Diagnóstico
+
+- **Basic Health**: `https://tu-app.onrender.com/Health`
+- **Full Health**: `https://tu-app.onrender.com/Health/Full`
+- **Home**: `https://tu-app.onrender.com/`
+
+## Pasos para Resolver Errores
+
+1. **Configurar Variables**: Copia las variables exactamente como están arriba
+2. **Verificar Logs**: Ve a Render Dashboard → tu servicio → Logs
+3. **Probar Health**: Visita `/Health` para ver el estado
+4. **Redespliega**: Manual redeploy si es necesario
+
+## Credenciales de Prueba
 
 ## Debugging en Render
 

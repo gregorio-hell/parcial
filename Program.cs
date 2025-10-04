@@ -15,16 +15,18 @@ if (builder.Environment.IsProduction())
 }
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "DataSource=app.db;Cache=Shared";
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
+                      ?? builder.Configuration.GetConnectionString("DefaultConnection") 
+                      ?? "DataSource=/tmp/data/app.db;Cache=Shared";
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlite(connectionString);
     
-    // Configuraciones adicionales para producción
+    // Configuraciones para producción
     if (builder.Environment.IsProduction())
     {
         options.EnableSensitiveDataLogging(false);
-        options.EnableServiceProviderCaching();
     }
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -87,10 +89,10 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-// Configurar puerto para Render
-if (builder.Environment.IsProduction())
+// Configurar puerto dinámico para Render
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
 {
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
     app.Urls.Add($"http://0.0.0.0:{port}");
 }
 
@@ -127,14 +129,18 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
-// Ejecutar seed data y migraciones
-using (var scope = app.Services.CreateScope())
+// Ejecutar seed data y migraciones (en background para no bloquear el inicio)
+_ = Task.Run(async () =>
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var logger = services.GetRequiredService<ILogger<Program>>();
     
     try
     {
+        // Esperar un poco para que la aplicación esté lista
+        await Task.Delay(2000);
+        
         var context = services.GetRequiredService<ApplicationDbContext>();
         
         // Aplicar migraciones pendientes
@@ -151,18 +157,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Error crítico durante la inicialización de la base de datos: {Error}", ex.Message);
-        
-        // En producción, intentar continuar sin seed data
-        if (app.Environment.IsProduction())
-        {
-            logger.LogWarning("Continuando sin seed data completo en producción...");
-        }
-        else
-        {
-            throw;
-        }
+        logger.LogError(ex, "Error durante la inicialización de la base de datos: {Error}", ex.Message);
     }
-}
+});
 
 app.Run();
