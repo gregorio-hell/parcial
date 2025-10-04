@@ -15,15 +15,21 @@ public class CursosController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IMatriculaService _matriculaService;
+    private readonly ISesionService _sesionService;
+    private readonly ICursosCache _cursosCache;
 
     public CursosController(
         ApplicationDbContext context, 
         UserManager<IdentityUser> userManager,
-        IMatriculaService matriculaService)
+        IMatriculaService matriculaService,
+        ISesionService sesionService,
+        ICursosCache cursosCache)
     {
         _context = context;
         _userManager = userManager;
         _matriculaService = matriculaService;
+        _sesionService = sesionService;
+        _cursosCache = cursosCache;
     }
 
     /// <summary>
@@ -48,47 +54,59 @@ public class CursosController : Controller
             return View(viewModel);
         }
 
-        // Construir query base - solo cursos activos
-        var query = _context.Cursos.Where(c => c.Activo);
-
-        // Aplicar filtros
+        // Obtener cursos desde cache (si no hay filtros) o desde BD (si hay filtros)
+        List<Curso> cursos;
         bool filtrosAplicados = false;
 
-        if (!string.IsNullOrWhiteSpace(filtros.Nombre))
+        // Verificar si hay filtros aplicados
+        bool hayFiltros = !string.IsNullOrWhiteSpace(filtros.Nombre) ||
+                         filtros.CreditosMin.HasValue ||
+                         filtros.CreditosMax.HasValue ||
+                         filtros.HorarioDesde.HasValue ||
+                         filtros.HorarioHasta.HasValue;
+
+        if (!hayFiltros)
         {
-            query = query.Where(c => c.Nombre.Contains(filtros.Nombre) || c.Codigo.Contains(filtros.Nombre));
-            filtrosAplicados = true;
+            // Sin filtros: usar cache
+            cursos = await _cursosCache.ObtenerCursosActivosAsync();
         }
-
-        if (filtros.CreditosMin.HasValue)
+        else
         {
-            query = query.Where(c => c.Creditos >= filtros.CreditosMin.Value);
+            // Con filtros: consultar BD directamente
             filtrosAplicados = true;
+            var query = _context.Cursos.Where(c => c.Activo);
+
+            if (!string.IsNullOrWhiteSpace(filtros.Nombre))
+            {
+                query = query.Where(c => c.Nombre.Contains(filtros.Nombre) || c.Codigo.Contains(filtros.Nombre));
+            }
+
+            if (filtros.CreditosMin.HasValue)
+            {
+                query = query.Where(c => c.Creditos >= filtros.CreditosMin.Value);
+            }
+
+            if (filtros.CreditosMax.HasValue)
+            {
+                query = query.Where(c => c.Creditos <= filtros.CreditosMax.Value);
+            }
+
+            if (filtros.HorarioDesde.HasValue)
+            {
+                query = query.Where(c => c.HorarioInicio >= filtros.HorarioDesde.Value);
+            }
+
+            if (filtros.HorarioHasta.HasValue)
+            {
+                query = query.Where(c => c.HorarioFin <= filtros.HorarioHasta.Value);
+            }
+
+            // Ordenar por código de curso
+            query = query.OrderBy(c => c.Codigo);
+
+            // Ejecutar query
+            cursos = await query.ToListAsync();
         }
-
-        if (filtros.CreditosMax.HasValue)
-        {
-            query = query.Where(c => c.Creditos <= filtros.CreditosMax.Value);
-            filtrosAplicados = true;
-        }
-
-        if (filtros.HorarioDesde.HasValue)
-        {
-            query = query.Where(c => c.HorarioInicio >= filtros.HorarioDesde.Value);
-            filtrosAplicados = true;
-        }
-
-        if (filtros.HorarioHasta.HasValue)
-        {
-            query = query.Where(c => c.HorarioFin <= filtros.HorarioHasta.Value);
-            filtrosAplicados = true;
-        }
-
-        // Ordenar por código de curso
-        query = query.OrderBy(c => c.Codigo);
-
-        // Ejecutar query
-        var cursos = await query.ToListAsync();
 
         var catalogoViewModel = new CatalogoCursosViewModel
         {
@@ -113,6 +131,9 @@ public class CursosController : Controller
         {
             return NotFound("El curso no existe o no está activo.");
         }
+
+        // Guardar último curso visitado en sesión
+        await _sesionService.GuardarUltimoCursoVisitadoAsync(id, curso.Codigo, curso.Nombre);
 
         var usuarioAutenticado = User.Identity?.IsAuthenticated == true;
         var yaMatriculado = false;

@@ -47,6 +47,8 @@
                                 <i class="fas fa-shield-alt"></i> Privacidad
                             </a>
                         </li>
+                        <!-- Mostrar último curso visitado desde sesión -->
+                        @await Component.InvokeAsync("UltimoCurso")
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
