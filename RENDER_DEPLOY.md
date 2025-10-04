@@ -20,7 +20,7 @@ Redis__ConnectionString=<YOUR_REDIS_CONNECTION_STRING>
 
 - `ASPNETCORE_ENVIRONMENT`: `Production`
 - `ASPNETCORE_URLS`: `http://0.0.0.0:${PORT}`
-- `ConnectionStrings__DefaultConnection`: `DataSource=app.db;Cache=Shared`
+- `ConnectionStrings__DefaultConnection`: `DataSource=/app/data/app.db;Cache=Shared`
 - `Redis__ConnectionString`: Tu string de conexión a Redis (opcional, usa memoria si no está disponible)
 
 ## Verificación Post-Despliegue

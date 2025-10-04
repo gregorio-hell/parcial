@@ -7,9 +7,18 @@ using parcial.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "DataSource=app.db;Cache=Shared";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+{
+    options.UseSqlite(connectionString);
+    
+    // Configuraciones adicionales para producción
+    if (builder.Environment.IsProduction())
+    {
+        options.EnableSensitiveDataLogging(false);
+        options.EnableServiceProviderCaching();
+    }
+});
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => {
@@ -118,12 +127,25 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
+        // Asegurar que la base de datos existe y las migraciones están aplicadas
+        await context.Database.EnsureCreatedAsync();
+        
         await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Ocurrió un error durante el seed data.");
+        
+        // En producción, no fallar si hay problemas con seed data
+        if (app.Environment.IsProduction())
+        {
+            logger.LogWarning("Continuando sin seed data en producción debido a error: {Error}", ex.Message);
+        }
+        else
+        {
+            throw;
+        }
     }
 }
 

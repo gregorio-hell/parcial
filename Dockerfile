@@ -22,12 +22,19 @@ RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 # Copiar archivos publicados
 COPY --from=build /app/out .
 
+# Crear directorio para la base de datos
+RUN mkdir -p /app/data
+
 # Configurar variables de entorno por defecto
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+ENV ConnectionStrings__DefaultConnection="DataSource=/app/data/app.db;Cache=Shared"
 
 # Exponer puerto
 EXPOSE 8080
+
+# Dar permisos de escritura al directorio de datos
+RUN chmod 777 /app/data
 
 # Comando de inicio
 ENTRYPOINT ["dotnet", "parcial.dll"]
