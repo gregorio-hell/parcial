@@ -29,9 +29,18 @@
                 <i class="fas fa-user-graduate fa-3x text-success mb-3"></i>
                 <h5 class="card-title">Mis Matrículas</h5>
                 <p class="card-text">Revisa el estado de tus inscripciones, consulta horarios y gestiona tus cursos matriculados.</p>
-                <a href="#" class="btn btn-success">
-                    <i class="fas fa-list"></i> Ver Matrículas
-                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Matriculas" asp-action="MisMatriculas" class="btn btn-success">
+                        <i class="fas fa-list"></i> Ver Matrículas
+                    </a>
+                }
+                else
+                {
+                    <a href="/Identity/Account/Login" class="btn btn-success">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </a>
+                }
             </div>
         </div>
     </div>

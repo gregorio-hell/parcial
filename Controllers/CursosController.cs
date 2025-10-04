@@ -150,22 +150,42 @@ public class CursosController : Controller
         
         if (string.IsNullOrEmpty(usuarioId))
         {
-            return RedirectToAction("Login", "Account");
+            TempData["MensajeError"] = "Debes estar autenticado para inscribirte en un curso.";
+            return RedirectToAction("Detalle", new { id });
         }
 
-        // Usar el servicio de matrícula para validar y procesar la inscripción
-        var resultado = await _matriculaService.MatricularEstudianteAsync(id, usuarioId);
-        var mensajeValidacion = await _matriculaService.ValidarMatriculaAsync(id, usuarioId);
+        try
+        {
+            // Validar reglas de negocio antes de procesar la inscripción
+            var mensajeValidacion = await _matriculaService.ValidarMatriculaAsync(id, usuarioId);
+            
+            if (!string.IsNullOrEmpty(mensajeValidacion))
+            {
+                TempData["MensajeError"] = mensajeValidacion;
+                return RedirectToAction("Detalle", new { id });
+            }
 
-        if (resultado)
-        {
-            TempData["MensajeExito"] = "Te has inscrito exitosamente en el curso. Tu matrícula está pendiente de confirmación.";
+            // Procesar la inscripción
+            var resultado = await _matriculaService.MatricularEstudianteAsync(id, usuarioId);
+
+            if (resultado)
+            {
+                TempData["MensajeExito"] = "¡Inscripción exitosa! Tu matrícula ha sido registrada en estado PENDIENTE. " +
+                                         "Un coordinador académico revisará y confirmará tu inscripción.";
+            }
+            else
+            {
+                TempData["MensajeError"] = "No se pudo procesar la inscripción. Es posible que ya estés matriculado " +
+                                         "o que se haya alcanzado el cupo máximo. Por favor, inténtalo nuevamente.";
+            }
         }
-        else
+        catch (Exception)
         {
-            TempData["MensajeError"] = !string.IsNullOrEmpty(mensajeValidacion) 
-                ? mensajeValidacion 
-                : "No se pudo procesar la inscripción. Inténtalo nuevamente.";
+            TempData["MensajeError"] = "Ocurrió un error inesperado durante la inscripción. " +
+                                     "Por favor, contacta al administrador del sistema.";
+            
+            // Log del error para debugging (en un sistema real)
+            // _logger.LogError(ex, "Error durante inscripción del usuario {UserId} en curso {CursoId}", usuarioId, id);
         }
 
         return RedirectToAction("Detalle", new { id });
