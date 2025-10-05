@@ -7,7 +7,6 @@ using System.Security.Claims;
 
 namespace parcial.Controllers;
 
-[Authorize]
 public class MatriculasController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -27,8 +26,9 @@ public class MatriculasController : Controller
         
         if (string.IsNullOrEmpty(usuarioId))
         {
-            TempData["MensajeError"] = "Debes estar autenticado para ver tus matrículas.";
-            return RedirectToAction("Login", "Home");
+            // Para usuarios no autenticados, devolvemos una lista vacía
+            // La vista se encargará de mostrar el mensaje de login
+            return View(new List<Matricula>());
         }
 
         var matriculas = await _context.Matriculas
@@ -45,6 +45,7 @@ public class MatriculasController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize]
     public async Task<IActionResult> Cancelar(int id)
     {
         var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
