@@ -34,13 +34,13 @@
                                 <i class="fas fa-book"></i> Catálogo de Cursos
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Matriculas" asp-action="MisMatriculas">
+                                <i class="fas fa-user-graduate"></i> Mis Matrículas
+                            </a>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Matriculas" asp-action="MisMatriculas">
-                                    <i class="fas fa-user-graduate"></i> Mis Matrículas
-                                </a>
-                            </li>
                             @if (User.IsInRole("Coordinador"))
                             {
                                 <li class="nav-item">
