@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using parcial.Data;
 using parcial.Services;
 
@@ -65,9 +66,9 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => {
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Configurar autenticación adicional por cookies para sistema personalizado
-builder.Services.AddAuthentication()
-    .AddCookie("CustomAuth", options =>
+// Configurar autenticación por cookies como esquema por defecto
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
     {
         options.LoginPath = "/Home/Login";
         options.LogoutPath = "/Home/Logout";
@@ -76,7 +77,7 @@ builder.Services.AddAuthentication()
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
-        options.Cookie.Name = "CustomAuth";
+        options.Cookie.Name = "ParcialAuth";
     });
 
 builder.Services.AddControllersWithViews();
