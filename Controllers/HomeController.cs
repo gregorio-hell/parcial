@@ -63,8 +63,17 @@ public class HomeController : Controller
         // Validar credenciales (usuario demo)
         if (email == "coordinador@usmp.pe" && password == "Coordinador123!")
         {
+            // Buscar el usuario en la base de datos para obtener su ID
+            var coordinador = await _userManager.FindByEmailAsync(email);
+            if (coordinador == null)
+            {
+                ModelState.AddModelError("", "Error del sistema. Contacte al administrador.");
+                return View();
+            }
+
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, coordinador.Id),
                 new Claim(ClaimTypes.Name, email),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, "Coordinador")
@@ -156,6 +165,7 @@ public class HomeController : Controller
                 // Auto-login después del registro
                 var claims = new List<Claim>
                 {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(ClaimTypes.Name, email),
                     new Claim(ClaimTypes.Email, email),
                     new Claim(ClaimTypes.Role, "Estudiante")
