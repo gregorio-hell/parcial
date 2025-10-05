@@ -3,15 +3,16 @@
 @inject UserManager<IdentityUser> UserManager
 
 <ul class="navbar-nav">
-@if (SignInManager.IsSignedIn(User))
+@if (User.Identity?.IsAuthenticated == true)
 {
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
+        <span class="nav-link text-dark">
             <i class="fas fa-user"></i> ¡Hola @User.Identity?.Name!
-        </a>
+        </span>
     </li>
     <li class="nav-item">
-        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+        <form method="post" asp-controller="Home" asp-action="Logout" class="form-inline">
+            @Html.AntiForgeryToken()
             <button type="submit" class="nav-link btn btn-link text-dark">
                 <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
             </button>
@@ -21,14 +22,10 @@
 else
 {
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">
-            <i class="fas fa-user-plus"></i> Registrarse
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">
+        <a class="nav-link text-dark" asp-controller="Home" asp-action="Login">
             <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
         </a>
     </li>
 }
+</ul>
 </ul>
