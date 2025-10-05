@@ -14,10 +14,30 @@ if (builder.Environment.IsProduction())
     builder.Logging.SetMinimumLevel(LogLevel.Information);
 }
 
-// Add services to the container.
+// Configurar base de datos SQLite con persistencia en Render
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
-                      ?? builder.Configuration.GetConnectionString("DefaultConnection") 
-                      ?? "DataSource=/tmp/data/app.db;Cache=Shared";
+                      ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Para Render, usar directorio persistente si está disponible
+if (string.IsNullOrEmpty(connectionString))
+{
+    var dataDir = "/opt/render/project/data";
+    try 
+    {
+        if (!Directory.Exists(dataDir))
+        {
+            Directory.CreateDirectory(dataDir);
+        }
+        connectionString = $"DataSource={dataDir}/app.db;Cache=Shared";
+        Console.WriteLine($"📁 Usando directorio de datos: {dataDir}");
+    }
+    catch
+    {
+        // Fallback a directorio temporal
+        connectionString = "DataSource=/tmp/app.db;Cache=Shared";
+        Console.WriteLine("📁 Usando directorio temporal para base de datos");
+    }
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -52,23 +72,34 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Identity/Account/Login";
 });
 
-// Configurar cache distribuido - Redis en producción, memoria en desarrollo
-if (builder.Environment.IsProduction())
+// Configurar cache distribuido con fallback
+try 
 {
-    // Redis en producción
-    var redisUrl = builder.Configuration.GetConnectionString("Redis") 
-                   ?? Environment.GetEnvironmentVariable("REDIS_URL") 
-                   ?? "localhost:6379";
+    // Intentar Redis en producción si está disponible
+    var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL") 
+                   ?? Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
+                   ?? builder.Configuration.GetConnectionString("Redis");
     
-    builder.Services.AddStackExchangeRedisCache(options =>
+    if (!string.IsNullOrEmpty(redisUrl) && builder.Environment.IsProduction())
     {
-        options.Configuration = redisUrl;
-        options.InstanceName = "ParcialUniversidad";
-    });
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisUrl;
+            options.InstanceName = "ParcialUniversidad";
+        });
+        Console.WriteLine("✅ Redis configurado para producción");
+    }
+    else
+    {
+        // Fallback a memoria cache
+        builder.Services.AddDistributedMemoryCache();
+        Console.WriteLine("📝 Usando cache en memoria (fallback)");
+    }
 }
-else
+catch (Exception ex)
 {
-    // Memoria en desarrollo
+    Console.WriteLine($"⚠️ Error configurando Redis: {ex.Message}");
+    Console.WriteLine("📝 Usando cache en memoria como fallback");
     builder.Services.AddDistributedMemoryCache();
 }
 
@@ -129,6 +160,27 @@ app.MapControllerRoute(
 app.MapRazorPages()
    .WithStaticAssets();
 
+// Endpoints de salud para Render
+app.MapGet("/health", () => "OK");
+app.MapGet("/health/ready", async (ApplicationDbContext context) =>
+{
+    try
+    {
+        await context.Database.CanConnectAsync();
+        return Results.Ok(new { status = "Ready", timestamp = DateTime.UtcNow });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Database not ready: {ex.Message}");
+    }
+});
+
+app.MapGet("/health/live", () => Results.Ok(new { status = "Alive", timestamp = DateTime.UtcNow }));
+
+Console.WriteLine("🚀 Portal Universitario iniciando...");
+Console.WriteLine($"🌍 Environment: {app.Environment.EnvironmentName}");
+Console.WriteLine($"🔗 Listening on: {string.Join(", ", app.Urls)}");
+
 // Ejecutar seed data y migraciones (en background para no bloquear el inicio)
 _ = Task.Run(async () =>
 {
@@ -139,25 +191,25 @@ _ = Task.Run(async () =>
     try
     {
         // Esperar un poco para que la aplicación esté lista
-        await Task.Delay(2000);
+        await Task.Delay(3000);
         
         var context = services.GetRequiredService<ApplicationDbContext>();
         
         // Aplicar migraciones pendientes
-        logger.LogInformation("Aplicando migraciones de base de datos...");
+        logger.LogInformation("🔄 Aplicando migraciones de base de datos...");
         await context.Database.MigrateAsync();
         
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
-        logger.LogInformation("Ejecutando seed data...");
+        logger.LogInformation("🌱 Ejecutando seed data...");
         await ApplicationDbContext.SeedDataAsync(context, userManager, roleManager);
         
-        logger.LogInformation("Inicialización de base de datos completada exitosamente.");
+        logger.LogInformation("✅ Inicialización de base de datos completada exitosamente.");
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Error durante la inicialización de la base de datos: {Error}", ex.Message);
+        logger.LogError(ex, "❌ Error durante la inicialización de la base de datos: {Error}", ex.Message);
     }
 });
 

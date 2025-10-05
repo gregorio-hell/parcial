@@ -1,13 +1,40 @@
+# Dockerfile optimizado para Render.com (sin PostgreSQL)
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY . .
-RUN dotnet publish -c Release -o /app
 
+# Copy project file and restore dependencies first for better caching
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy source code and build
+COPY . ./
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+# Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-COPY --from=build /app .
 
+# Install curl for health checks and create data directory
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /opt/render/project/data \
+    && chmod 755 /opt/render/project/data
+
+# Copy published app
+COPY --from=build /app/publish .
+
+# Create a non-root user for security
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app \
+    && chown -R appuser:appgroup /opt/render/project/data
+USER appuser
+
+# Configure environment for Render
+ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://0.0.0.0:$PORT
 
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:$PORT/health || exit 1
+
 EXPOSE $PORT
-CMD ["dotnet", "parcial.dll"]
+ENTRYPOINT ["dotnet", "parcial.dll"]

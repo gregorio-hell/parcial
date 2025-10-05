@@ -1,21 +1,32 @@
-# Render Deployment Configuration - FIXED VERSION
+# Render Deployment - Sin PostgreSQL (SQLite + Redis Opcional)
 
-## Configuración en Render Dashboard
+## 📋 Configuración del Web Service en Render
 
-1. **Tipo de Servicio**: Web Service
-2. **Runtime**: Docker  
-3. **Región**: Oregon (recomendado)
-4. **Auto-Deploy**: Yes
+### Tipo de Servicio
+- **Service Type**: Web Service
+- **Runtime**: Docker
+- **Branch**: deploy/render
+- **Auto-Deploy**: Enabled
 
-## Variables de Entorno CRÍTICAS ⚠️
+## 🔧 Variables de Entorno CRÍTICAS
 
-**COPIA EXACTAMENTE ESTAS VARIABLES:**
-
-```
-PORT=$PORT
+### Mínimas Requeridas
+```bash
 ASPNETCORE_ENVIRONMENT=Production
-ASPNETCORE_URLS=http://0.0.0.0:$PORT
-ConnectionStrings__DefaultConnection=DataSource=/tmp/data/app.db;Cache=Shared
+ASPNETCORE_URLS=http://0.0.0.0:${PORT}
+```
+
+### Opcionales (Cache Redis)
+```bash
+# Solo si tienes Redis disponible
+REDIS_URL=redis://user:password@host:port
+ConnectionStrings__Redis=your-redis-connection-string
+```
+
+### Base de Datos
+```bash
+# Opcional - Por defecto usa almacenamiento local automático
+ConnectionStrings__DefaultConnection=DataSource=/opt/render/project/data/app.db;Cache=Shared
 ```
 
 ## Endpoints de Diagnóstico

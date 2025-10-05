@@ -2,7 +2,25 @@
 
 Sistema web desarrollado en ASP.NET Core 9.0 para la gestión de cursos universitarios con funcionalidades de matrícula, sesiones Redis y panel administrativo.
 
-## 📋 Funcionalidades Implementadas
+## � Despliegue en Render.com
+
+### Rama: deploy/render
+- **URL de despliegue**: [Configurar en Render](https://render.com)
+- **Variables mínimas**:
+  - `ASPNETCORE_ENVIRONMENT=Production`
+  - `ASPNETCORE_URLS=http://0.0.0.0:${PORT}`
+- **Base de datos**: SQLite (sin PostgreSQL)
+- **Cache**: Redis opcional (fallback a memoria)
+
+### Verificación Online
+1. **Login**: coordinador@usmp.pe / Coordinador123!
+2. **Catálogo**: Filtros y búsqueda funcional
+3. **Inscripción**: Validaciones y control de cupos
+4. **Panel Coordinador**: Gestión administrativa completa
+
+Consultar [RENDER_DEPLOY.md](./RENDER_DEPLOY.md) para instrucciones detalladas.
+
+## �📋 Funcionalidades Implementadas
 
 ### Pregunta 1 - Bootstrap + Dominio + Identity
 - ✅ Modelos de dominio (Curso, Matricula, EstadoMatricula)
