@@ -27,7 +27,8 @@ public class MatriculasController : Controller
         
         if (string.IsNullOrEmpty(usuarioId))
         {
-            return RedirectToAction("Login", "Account");
+            TempData["MensajeError"] = "Debes estar autenticado para ver tus matrículas.";
+            return RedirectToAction("Login", "Home");
         }
 
         var matriculas = await _context.Matriculas

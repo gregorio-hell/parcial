@@ -13,11 +13,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public HomeController(ILogger<HomeController> logger, UserManager<IdentityUser> userManager)
+    public HomeController(ILogger<HomeController> logger, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public IActionResult Index()
@@ -60,23 +62,20 @@ public class HomeController : Controller
             return View();
         }
 
-        // Validar credenciales (usuario demo)
-        if (email == "coordinador@usmp.pe" && password == "Coordinador123!")
+        // Validar credenciales usando UserManager
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user != null && await _userManager.CheckPasswordAsync(user, password))
         {
-            // Buscar el usuario en la base de datos para obtener su ID
-            var coordinador = await _userManager.FindByEmailAsync(email);
-            if (coordinador == null)
-            {
-                ModelState.AddModelError("", "Error del sistema. Contacte al administrador.");
-                return View();
-            }
+            // Obtener roles del usuario
+            var roles = await _userManager.GetRolesAsync(user);
+            var userRole = roles.FirstOrDefault() ?? "Estudiante";
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, coordinador.Id),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, email),
                 new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, "Coordinador")
+                new Claim(ClaimTypes.Role, userRole)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
