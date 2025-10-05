@@ -58,7 +58,7 @@ public class HomeController : Controller
         }
 
         // Validar credenciales (usuario demo)
-        if (email == "coordinador@usmp.pe" && password == "Admin123!")
+        if (email == "coordinador@usmp.pe" && password == "Coordinador123!")
         {
             var claims = new List<Claim>
             {

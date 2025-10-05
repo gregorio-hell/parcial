@@ -4,11 +4,11 @@ WORKDIR /src
 
 # Copy project file and restore dependencies first for better caching
 COPY *.csproj ./
-RUN dotnet restore
+RUN dotnet restore *.csproj
 
-# Copy source code and build
+# Copy source code and build (específicamente el proyecto, no la solución)
 COPY . ./
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN dotnet publish parcial.csproj -c Release -o /app/publish --no-restore
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
