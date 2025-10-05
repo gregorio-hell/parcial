@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.AspNetCore.DataProtection;
 using parcial.Data;
 using parcial.Services;
 
@@ -149,6 +150,35 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = "ParcialSession";
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
+
+// Configurar Data Protection para evitar warnings en contenedores
+if (builder.Environment.IsProduction())
+{
+    var keysDir = "/opt/render/project/data/keys";
+    try
+    {
+        if (!Directory.Exists(keysDir))
+        {
+            Directory.CreateDirectory(keysDir);
+            Console.WriteLine($"📁 Directorio de claves creado: {keysDir}");
+        }
+        
+        builder.Services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo(keysDir))
+            .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+        
+        Console.WriteLine("🔐 Data Protection configurado con persistencia");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Error configurando Data Protection: {ex.Message}");
+        Console.WriteLine("🔐 Usando Data Protection por defecto");
+    }
+}
+else
+{
+    Console.WriteLine("🔐 Data Protection en modo desarrollo");
+}
 
 // Registrar servicios personalizados
 builder.Services.AddScoped<IMatriculaService, MatriculaService>();
