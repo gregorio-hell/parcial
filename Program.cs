@@ -92,44 +92,62 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Configurar cache distribuido con fallback
-try 
+// Configurar cache distribuido con fallback robusto
+bool useRedis = false;
+
+// Verificar configuración explícita para usar Redis
+var useRedisConfig = builder.Configuration.GetValue<bool>("CacheSettings:UseRedis");
+var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL") 
+               ?? Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
+               ?? builder.Configuration.GetConnectionString("Redis");
+
+// Solo usar Redis si está explícitamente habilitado Y configurado
+if (useRedisConfig && !string.IsNullOrEmpty(redisUrl))
 {
-    // Intentar Redis en producción si está disponible
-    var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL") 
-                   ?? Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
-                   ?? builder.Configuration.GetConnectionString("Redis");
-    
-    if (!string.IsNullOrEmpty(redisUrl) && builder.Environment.IsProduction())
+    try 
     {
-        builder.Services.AddStackExchangeRedisCache(options =>
+        // Verificar que no sea localhost (que causaría error en Render)
+        if (!redisUrl.Contains("localhost") && !redisUrl.Contains("127.0.0.1"))
         {
-            options.Configuration = redisUrl;
-            options.InstanceName = "ParcialUniversidad";
-        });
-        Console.WriteLine("✅ Redis configurado para producción");
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisUrl;
+                options.InstanceName = "ParcialUniversidad";
+            });
+            useRedis = true;
+            Console.WriteLine("✅ Redis configurado para producción");
+        }
+        else
+        {
+            Console.WriteLine("⚠️ Redis URL contiene localhost, usando cache en memoria");
+        }
     }
-    else
+    catch (Exception ex)
     {
-        // Fallback a memoria cache
-        builder.Services.AddDistributedMemoryCache();
-        Console.WriteLine("📝 Usando cache en memoria (fallback)");
+        Console.WriteLine($"⚠️ Error configurando Redis: {ex.Message}");
+        Console.WriteLine("📝 Usando cache en memoria como fallback");
     }
 }
-catch (Exception ex)
+else
 {
-    Console.WriteLine($"⚠️ Error configurando Redis: {ex.Message}");
-    Console.WriteLine("📝 Usando cache en memoria como fallback");
-    builder.Services.AddDistributedMemoryCache();
+    Console.WriteLine("📝 Redis deshabilitado por configuración");
 }
 
-// Configurar sesiones
+if (!useRedis)
+{
+    // Usar cache en memoria como fallback seguro
+    builder.Services.AddDistributedMemoryCache();
+    Console.WriteLine("📝 Usando cache en memoria");
+}
+
+// Configurar sesiones (sin depender de cache distribuido)
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.Name = "ParcialSession";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 // Registrar servicios personalizados
